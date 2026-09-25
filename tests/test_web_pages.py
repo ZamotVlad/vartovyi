@@ -93,3 +93,26 @@ def test_error_pages_do_not_depend_on_scripts() -> None:
     # Сторінка 500 має працювати, навіть коли щось зламано: тільки HTML і CSS
     for name in ("404.html", "500.html"):
         assert "<script" not in (STATIC_DIR / "pages" / name).read_text()
+
+
+async def test_robots_hides_private_areas_and_points_to_sitemap(client: AsyncClient) -> None:
+    body = (await client.get("/robots.txt")).text
+    assert "Disallow: /dashboard" in body
+    assert "Disallow: /api/" in body
+    assert "Sitemap: http://test/sitemap.xml" in body
+
+
+async def test_sitemap_lists_only_public_pages(client: AsyncClient) -> None:
+    response = await client.get("/sitemap.xml")
+    assert response.headers["content-type"].startswith("application/xml")
+    assert "<loc>http://test/register</loc>" in response.text
+    assert "dashboard" not in response.text
+
+
+@pytest.mark.parametrize("path", ["/", "/login", "/register", "/status/demo"])
+async def test_public_pages_have_description(client: AsyncClient, path: str) -> None:
+    assert '<meta name="description"' in (await client.get(path)).text
+
+
+async def test_dashboard_is_not_indexed(client: AsyncClient) -> None:
+    assert '<meta name="robots" content="noindex">' in (await client.get("/dashboard")).text

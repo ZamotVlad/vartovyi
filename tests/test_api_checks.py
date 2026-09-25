@@ -72,3 +72,18 @@ async def test_check_endpoints_require_auth(client: AsyncClient) -> None:
 
     assert (await client.post(url)).status_code == 401
     assert (await client.get(url)).status_code == 401
+
+
+@respx.mock
+async def test_monitor_list_embeds_latest_check(client: AsyncClient) -> None:
+    respx.get("https://example.com/health").respond(503)
+    alice = await auth_headers(client, "alice@example.com")
+    checked = await create(client, alice, name="a")
+    await create(client, alice, name="b")
+    await client.post(f"{MONITORS}/{checked['id']}/checks", headers=alice)
+
+    items = (await client.get(MONITORS, params={"sort": "name"}, headers=alice)).json()["items"]
+
+    assert items[0]["latest_check"]["status"] == "down"
+    assert items[0]["latest_check"]["status_code"] == 503
+    assert items[1]["latest_check"] is None

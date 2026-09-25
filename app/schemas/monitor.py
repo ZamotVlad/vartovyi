@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.monitor import MonitorSort, MonitorTiming, timing_violation
+from app.schemas.check import CheckRead
 from app.schemas.common import PageParams
 
 Name = Annotated[str, Field(min_length=1, max_length=100)]
@@ -77,6 +78,12 @@ class MonitorRead(BaseModel):
     last_checked_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class MonitorListItem(MonitorRead):
+    """Рядок списку разом з останньою перевіркою: дашборду не треба N запитів."""
+
+    latest_check: CheckRead | None = None
 
 
 class MonitorFilter(PageParams):
