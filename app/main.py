@@ -5,13 +5,17 @@ from fastapi import FastAPI
 
 from app.api.v1.router import api_router
 from app.config import get_settings
+from app.db.session import create_engine, create_sessionmaker
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: тут з'являться пул БД, HTTP-клієнт, Redis
-    yield
-    # Shutdown: тут вони коректно закриються
+    engine = create_engine(get_settings())
+    app.state.sessionmaker = create_sessionmaker(engine)
+    try:
+        yield
+    finally:
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:
