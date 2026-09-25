@@ -18,3 +18,4 @@ wheels/
 .mypy_cache/
 htmlcov/
 .coverage
+.env.prod

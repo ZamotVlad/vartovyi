@@ -178,9 +178,37 @@ uv run pytest --cov      # звіт покриття
 - Базу для тестів можна змінити через `TEST_DATABASE_URL`, без неї такі тести
   пропускаються
 
+## Deployment
+
+Продакшн-конфігурація: `Dockerfile` (multi-stage) і `docker-compose.prod.yml`
+з сервісами `postgres`, `redis`, `migrate` і `app`.
+
+```bash
+cp .env.prod.example .env.prod          # задати паролі і JWT_SECRET_KEY
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+curl http://127.0.0.1:8000/api/v1/health
+```
+
+- **Образ.** Перша стадія ставить лише runtime-залежності (`uv sync --frozen --no-dev`),
+  друга копіює готовий `.venv` у чистий `python:3.12-slim`. pytest, ruff і mypy
+  в образ не потрапляють. Працює від некореневого користувача `app`, має
+  `HEALTHCHECK` на `/api/v1/health`.
+- **Порядок старту.** `postgres` і `redis` мають healthcheck, одноразовий `migrate`
+  виконує `alembic upgrade head`, і лише після його успіху стартує `app`.
+- **Дані** лежать в іменованих volumes `postgres-data` і `redis-data`. Redis
+  працює з AOF, тож відкликані токени переживають перезапуск.
+- **Один воркер uvicorn** навмисно: планувальник перевірок має жити в одному
+  процесі (див. ADR-003). Масштабувати API горизонтально можна лише після
+  винесення планувальника в окремий сервіс.
+- **Секрети** в `.env.prod` (у `.gitignore`). Окремий від `.env` файл, бо змінні
+  `POSTGRES_*` не є налаштуваннями застосунку, а `Settings` відхиляє невідомі
+  ключі з `.env`. Без `JWT_SECRET_KEY` compose не стартує, а зі стандартним
+  секретом застосунок відмовиться запускатися в `production`.
+- Застосунок очікує реверс-проксі з TLS попереду (uvicorn запущено з
+  `--proxy-headers`).
+
 ## Що далі
 
 - Ідемпотентність створення моніторів через `Idempotency-Key`
 - Експорт історії перевірок у CSV
-- Docker-конфігурація для продакшну
 - Винесення планувальника в окремий процес або Celery beat
