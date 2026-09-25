@@ -21,6 +21,11 @@ class Settings(BaseSettings):
 
     api_v1_prefix: str = "/api/v1"
 
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    log_format: Literal["json", "text"] = "json"
+    # Порожній список вимикає CORS. Формат у .env: CORS_ORIGINS=["http://localhost:3000"]
+    cors_origins: list[str] = []
+
     database_url: str = "postgresql+asyncpg://vartovyi:vartovyi@localhost:5432/vartovyi"
     database_echo: bool = False
 
