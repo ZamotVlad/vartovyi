@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, true
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -28,6 +29,8 @@ class Monitor(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     max_response_ms: Mapped[int | None] = mapped_column(Integer)
     keyword: Mapped[str | None] = mapped_column(String(200))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # Денормалізація: планувальнику не треба агрегувати checks, щоб знайти прострочені
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     checks: Mapped[list["Check"]] = relationship(
         back_populates="monitor", cascade="all, delete-orphan", passive_deletes=True

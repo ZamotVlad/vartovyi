@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 from typing import Annotated
 
+import httpx
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from redis.asyncio import Redis
@@ -12,6 +13,7 @@ from app.domain.errors import InvalidTokenError
 from app.repositories.token_blacklist import TokenBlacklist
 from app.services.api_key import ApiKeyService
 from app.services.auth import AuthService
+from app.services.check import CheckService
 from app.services.monitor import MonitorService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
@@ -37,6 +39,14 @@ def get_redis(request: Request) -> Redis:
 
 
 RedisDep = Annotated[Redis, Depends(get_redis)]
+
+
+def get_http_client(request: Request) -> httpx.AsyncClient:
+    client: httpx.AsyncClient = request.app.state.http_client
+    return client
+
+
+HttpClientDep = Annotated[httpx.AsyncClient, Depends(get_http_client)]
 
 
 def get_auth_service(session: SessionDep, redis: RedisDep, settings: SettingsDep) -> AuthService:
@@ -109,3 +119,10 @@ def get_monitor_service(session: SessionDep) -> MonitorService:
 
 
 MonitorServiceDep = Annotated[MonitorService, Depends(get_monitor_service)]
+
+
+def get_check_service(session: SessionDep, settings: SettingsDep) -> CheckService:
+    return CheckService(session, settings)
+
+
+CheckServiceDep = Annotated[CheckService, Depends(get_check_service)]

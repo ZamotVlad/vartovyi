@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.monitor import MonitorSort, MonitorTiming, timing_violation
+from app.schemas.common import PageParams
 
 Name = Annotated[str, Field(min_length=1, max_length=100)]
 IntervalSeconds = Annotated[int, Field(ge=30, le=86_400)]
@@ -70,17 +71,14 @@ class MonitorRead(BaseModel):
     max_response_ms: int | None
     keyword: str | None
     is_active: bool
+    last_checked_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
 
-class MonitorFilter(BaseModel):
+class MonitorFilter(PageParams):
     """Параметри списку. Використовується як Query-модель."""
 
-    model_config = ConfigDict(extra="forbid")
-
-    limit: int = Field(default=20, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
     is_active: bool | None = None
     search: str | None = Field(
         default=None, min_length=1, max_length=100, description="Підрядок у назві або URL"

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from uuid import UUID
 
 
 class CheckStatus(StrEnum):
@@ -32,6 +33,16 @@ class Expectation:
     expected_status: int = 200
     max_response_ms: float | None = None
     keyword: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CheckTarget:
+    """Що і як перевіряти. Знімок монітора без прив'язки до ORM-сесії."""
+
+    monitor_id: UUID
+    url: str
+    timeout_ms: int
+    expectation: Expectation
 
 
 @dataclass(frozen=True, slots=True)

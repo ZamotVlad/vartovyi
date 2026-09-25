@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import Mapping, Sequence
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import UnaryExpression, func, or_, select
@@ -64,8 +65,14 @@ class MonitorRepository(SqlRepository):
         )
         return page.all(), total or 0
 
-    async def list_active(self) -> Sequence[Monitor]:
-        result = await self.session.scalars(select(Monitor).where(Monitor.is_active.is_(True)))
+    async def list_due(self, now: datetime) -> Sequence[Monitor]:
+        """Активні монітори, які ще не перевірялись або чий інтервал минув."""
+        next_due = Monitor.last_checked_at + Monitor.interval_seconds * timedelta(seconds=1)
+        stmt = select(Monitor).where(
+            Monitor.is_active.is_(True),
+            or_(Monitor.last_checked_at.is_(None), next_due <= now),
+        )
+        result = await self.session.scalars(stmt)
         return result.all()
 
     async def update(self, monitor: Monitor, values: Mapping[str, Any]) -> Monitor:

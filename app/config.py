@@ -36,8 +36,14 @@ class Settings(BaseSettings):
     access_token_ttl_seconds: int = Field(default=15 * 60, ge=60)
     refresh_token_ttl_seconds: int = Field(default=7 * 24 * 3600, ge=3600)
 
-    check_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    # Глобальна стеля поверх timeout_ms монітора
+    check_timeout_seconds: float = Field(default=60.0, gt=0, le=60)
     check_max_concurrency: int = Field(default=50, ge=1, le=500)
+    check_body_max_bytes: int = Field(default=64 * 1024, ge=1024)
+    incident_failure_threshold: int = Field(default=2, ge=1, le=10)
+    # Планувальник має працювати рівно в одному процесі, інакше перевірки дублюватимуться
+    scheduler_enabled: bool = True
+    scheduler_tick_seconds: float = Field(default=5.0, gt=0, le=60)
 
     @model_validator(mode="after")
     def require_real_secret_outside_local(self) -> Self:

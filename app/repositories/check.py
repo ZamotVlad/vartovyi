@@ -2,7 +2,7 @@ import uuid
 from collections.abc import Sequence
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.db.models import Check
 from app.domain.check import CheckStatus
@@ -23,6 +23,21 @@ class CheckRepository(SqlRepository):
             .limit(1)
         )
         return await self.session.scalar(stmt)
+
+    async def recent(self, monitor_id: uuid.UUID, limit: int) -> Sequence[Check]:
+        """Останні limit перевірок у хронологічному порядку, найновіша остання."""
+        stmt = (
+            select(Check)
+            .where(Check.monitor_id == monitor_id)
+            .order_by(Check.created_at.desc())
+            .limit(limit)
+        )
+        result = await self.session.scalars(stmt)
+        return list(reversed(result.all()))
+
+    async def count_for_monitor(self, monitor_id: uuid.UUID) -> int:
+        stmt = select(func.count()).select_from(Check).where(Check.monitor_id == monitor_id)
+        return await self.session.scalar(stmt) or 0
 
     async def list_for_monitor(
         self, monitor_id: uuid.UUID, *, limit: int, offset: int = 0
