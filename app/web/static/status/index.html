@@ -3,48 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Статус сервісів</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/static/status/status.css">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/fonts.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <title>Статус сервісів - Vartovyi</title>
   <script src="/static/status/status.js" defer></script>
 </head>
 <body>
-  <main class="page">
-    <header class="header">
-      <p class="eyebrow">Сторінка статусу</p>
-      <h1 id="title">Статус сервісів</h1>
-    </header>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="lamp lamp--live" aria-hidden="true"></span>Vartovyi</a>
+  </header>
+  <main class="page status">
+    <p class="muted status__eyebrow">Сторінка статусу</p>
+    <h1 id="title" class="data-title">Статус сервісів</h1>
 
-    <section id="banner" class="banner banner--loading" role="status" aria-live="polite">
-      <span class="banner__dot" aria-hidden="true"></span>
+    <section id="banner" class="banner" role="status" aria-live="polite">
+      <span class="lamp" id="banner-lamp" aria-hidden="true"></span>
       <span id="banner-text">Завантаження...</span>
     </section>
 
     <section aria-labelledby="monitors-heading">
       <h2 id="monitors-heading" class="visually-hidden">Сервіси</h2>
-      <ul id="monitors" class="monitors"></ul>
+      <div class="status__cols muted" aria-hidden="true">
+        <span></span><span>Сервіс</span><span>24 год</span><span>7 днів</span><span>30 днів</span>
+      </div>
+      <ul id="monitors" class="signals"></ul>
       <p id="empty" class="muted" hidden>На цій сторінці поки немає сервісів.</p>
     </section>
 
-    <footer class="footer muted">
-      <span id="updated"></span>
-      <span>Працює на Vartovyi</span>
-    </footer>
+    <p class="muted refreshed" id="updated"></p>
   </main>
 
   <template id="monitor-template">
-    <li class="monitor">
-      <div class="monitor__head">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="monitor__name"></span>
-        <span class="monitor__status"></span>
+    <li class="signal status__row">
+      <span class="lamp" aria-hidden="true"></span>
+      <div class="signal__main">
+        <span class="signal__name"></span>
+        <span class="signal__state"></span>
       </div>
-      <dl class="uptime">
-        <div class="uptime__item"><dt>24 год</dt><dd data-window="uptime_24h"></dd></div>
-        <div class="uptime__item"><dt>7 днів</dt><dd data-window="uptime_7d"></dd></div>
-        <div class="uptime__item"><dt>30 днів</dt><dd data-window="uptime_30d"></dd></div>
-      </dl>
-      <p class="monitor__checked muted"></p>
+      <span class="data status__pct" data-window="uptime_24h"></span>
+      <span class="data status__pct" data-window="uptime_7d"></span>
+      <span class="data status__pct" data-window="uptime_30d"></span>
     </li>
   </template>
 </body>

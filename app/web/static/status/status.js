@@ -1,13 +1,7 @@
 "use strict";
 
 const REFRESH_MS = 60_000;
-
-const STATUS_LABELS = {
-  up: "Працює",
-  degraded: "Повільно",
-  down: "Недоступний",
-};
-
+const STATUS_LABELS = { up: "Працює", degraded: "Повільно", down: "Недоступний" };
 const BANNERS = {
   up: "Усі системи працюють",
   degraded: "Деякі сервіси працюють повільно",
@@ -40,24 +34,23 @@ function formatRelative(isoDate) {
 }
 
 function setBanner(status, text) {
-  const banner = document.getElementById("banner");
-  banner.className = `banner banner--${status}`;
+  document.getElementById("banner-lamp").className = `lamp lamp--${status}`;
   document.getElementById("banner-text").textContent = text;
 }
 
 function renderMonitor(template, monitor) {
   const node = template.content.firstElementChild.cloneNode(true);
   const status = monitor.current_status || "unknown";
-  node.dataset.status = status;
+  node.querySelector(".lamp").className = `lamp lamp--${status}`;
   // Лише textContent: назви задає користувач, вставка як HTML відкрила б шлях для XSS
-  node.querySelector(".monitor__name").textContent = monitor.name;
-  node.querySelector(".monitor__status").textContent = STATUS_LABELS[status] || "Немає даних";
+  node.querySelector(".signal__name").textContent = monitor.name;
+  const label = STATUS_LABELS[status] || "Немає даних";
+  node.querySelector(".signal__state").textContent = monitor.last_checked_at
+    ? `${label}, перевірено ${formatRelative(monitor.last_checked_at)}`
+    : "Ще не перевірявся";
   for (const cell of node.querySelectorAll("[data-window]")) {
     cell.textContent = formatPercent(monitor[cell.dataset.window]);
   }
-  node.querySelector(".monitor__checked").textContent = monitor.last_checked_at
-    ? `Остання перевірка: ${formatRelative(monitor.last_checked_at)}`
-    : "Ще не перевірявся";
   return node;
 }
 
@@ -66,11 +59,10 @@ function render(page) {
   const template = document.getElementById("monitor-template");
   list.replaceChildren(...page.monitors.map((m) => renderMonitor(template, m)));
   document.getElementById("empty").hidden = page.monitors.length > 0;
-
   const status = overallStatus(page.monitors);
   setBanner(status, BANNERS[status]);
   document.getElementById("updated").textContent =
-    `Оновлено ${new Date(page.generated_at).toLocaleTimeString("uk-UA")}`;
+    `Оновлено о ${new Date(page.generated_at).toLocaleTimeString("uk-UA")}, далі щохвилини`;
 }
 
 async function load() {
@@ -79,25 +71,22 @@ async function load() {
       headers: { Accept: "application/json" },
     });
     if (response.status === 404) {
-      setBanner("down", "Сторінку статусу не знайдено");
+      setBanner("unknown", "Сторінку статусу не знайдено");
       return false;
     }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     render(await response.json());
-  } catch (error) {
+  } catch {
     // Попередні дані лишаються на екрані, міняємо лише банер
     setBanner("unknown", "Не вдалося оновити дані, повторимо за хвилину");
-    console.error(error);
   }
   return true;
 }
 
 async function start() {
-  document.getElementById("title").textContent = `Статус: ${slug}`;
-  document.title = `Статус: ${slug}`;
-  if (await load()) {
-    setInterval(load, REFRESH_MS);
-  }
+  document.getElementById("title").textContent = slug;
+  document.title = `${slug} - статус сервісів`;
+  if (await load()) window.setInterval(load, REFRESH_MS);
 }
 
 start();

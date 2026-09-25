@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/fonts.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <title>Vartovyi - моніторинг доступності сайтів і API</title>
+  <meta name="description" content="Vartovyi перевіряє ваші сайти й API за розкладом, рахує uptime і показує публічну сторінку статусу.">
+  <script src="/static/js/api.js" defer></script>
+  <script src="/static/js/landing.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="lamp lamp--live" aria-hidden="true"></span>Vartovyi</a>
+    <nav class="topbar__right" id="nav" aria-label="Обліковий запис">
+      <a href="/login">Увійти</a>
+      <a class="btn btn--small" href="/register">Зареєструватись</a>
+    </nav>
+  </header>
+
+  <main class="page landing">
+    <section class="landing__intro">
+      <h1>Дізнайтесь, що сайт упав, раніше за користувачів</h1>
+      <p class="landing__lead">
+        Vartovyi перевіряє ваші сайти й API за розкладом: код відповіді, ключове слово
+        в тілі, час відповіді. Після кількох падінь поспіль відкриває інцидент, а
+        uptime за добу, тиждень і місяць показує на публічній сторінці статусу.
+      </p>
+      <div class="landing__actions">
+        <a class="btn" href="/register">Зареєструватись</a>
+        <a class="btn btn--ghost" href="/login">Увійти</a>
+      </div>
+    </section>
+
+    <section class="landing__panel" aria-labelledby="demo-title">
+      <div class="section-head">
+        <h2 id="demo-title">Панель сигналів</h2>
+        <span class="muted">приклад, не реальні дані</span>
+      </div>
+      <ul class="signals">
+        <li class="signal">
+          <span class="lamp lamp--up" aria-hidden="true"></span>
+          <span class="signal__name">API продакшн<span class="visually-hidden">: працює</span></span>
+          <span class="signal__url data">https://api.shop.example/health</span>
+          <span class="signal__code data">200</span>
+          <span class="signal__ms data">142 мс</span>
+        </li>
+        <li class="signal">
+          <span class="lamp lamp--up" aria-hidden="true"></span>
+          <span class="signal__name">Вітрина<span class="visually-hidden">: працює</span></span>
+          <span class="signal__url data">https://shop.example</span>
+          <span class="signal__code data">200</span>
+          <span class="signal__ms data">318 мс</span>
+        </li>
+        <li class="signal">
+          <span class="lamp lamp--degraded" aria-hidden="true"></span>
+          <span class="signal__name">Пошук<span class="visually-hidden">: повільно</span></span>
+          <span class="signal__url data">https://search.shop.example/ping</span>
+          <span class="signal__code data">200</span>
+          <span class="signal__ms data">2 410 мс</span>
+        </li>
+        <li class="signal">
+          <span class="lamp lamp--down" aria-hidden="true"></span>
+          <span class="signal__name">Платежі<span class="visually-hidden">: недоступний</span></span>
+          <span class="signal__url data">https://pay.shop.example/status</span>
+          <span class="signal__code data">503</span>
+          <span class="signal__ms data">88 мс</span>
+        </li>
+      </ul>
+      <dl class="legend">
+        <div><dt><span class="lamp lamp--up" aria-hidden="true"></span> Працює</dt><dd>очікуваний код і ключове слово</dd></div>
+        <div><dt><span class="lamp lamp--degraded" aria-hidden="true"></span> Повільно</dt><dd>відповідь довша за ваш поріг</dd></div>
+        <div><dt><span class="lamp lamp--down" aria-hidden="true"></span> Недоступний</dt><dd>помилка, таймаут чи не той код</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Vartovyi - навчальний проєкт на FastAPI.
+    <a href="/docs">Документація API</a>
+  </footer>
+</body>
+</html>

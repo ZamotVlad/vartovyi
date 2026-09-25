@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/fonts.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <title>Реєстрація - Vartovyi</title>
+  <script src="/static/js/api.js" defer></script>
+  <script src="/static/js/auth.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="lamp lamp--live" aria-hidden="true"></span>Vartovyi</a>
+  </header>
+  <main class="page auth">
+    <h1>Створити обліковий запис</h1>
+    <p class="muted">Вже є обліковий запис? <a href="/login">Увійти</a></p>
+    <form id="auth-form" data-mode="register" novalidate>
+      <p class="notice" id="form-error" role="alert" hidden></p>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-error">
+        <span class="field__error" id="email-error" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required aria-describedby="password-hint password-error">
+        <span class="field__hint" id="password-hint">Щонайменше 8 символів</span>
+        <span class="field__error" id="password-error" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label for="password2">Повторіть пароль</label>
+        <input id="password2" name="password2" type="password" autocomplete="new-password" required aria-describedby="password2-error">
+        <span class="field__error" id="password2-error" aria-live="polite"></span>
+      </div>
+      <button class="btn" type="submit">Зареєструватись</button>
+    </form>
+  </main>
+</body>
+</html>

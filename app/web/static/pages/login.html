@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/fonts.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <title>Вхід - Vartovyi</title>
+  <script src="/static/js/api.js" defer></script>
+  <script src="/static/js/auth.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="lamp lamp--live" aria-hidden="true"></span>Vartovyi</a>
+  </header>
+  <main class="page auth">
+    <h1>Вхід до панелі</h1>
+    <p class="muted">Немає облікового запису? <a href="/register">Зареєструватись</a></p>
+    <form id="auth-form" data-mode="login" novalidate>
+      <p class="notice" id="form-error" role="alert" hidden></p>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-error">
+        <span class="field__error" id="email-error" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required aria-describedby="password-error">
+        
+        <span class="field__error" id="password-error" aria-live="polite"></span>
+      </div>
+
+      <button class="btn" type="submit">Увійти</button>
+    </form>
+  </main>
+</body>
+</html>
