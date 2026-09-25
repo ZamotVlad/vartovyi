@@ -35,3 +35,13 @@ class InactiveUserError(DomainError):
 class ApiKeyNotFoundError(DomainError):
     code = "api_key_not_found"
     message = "API-ключ не знайдено"
+
+
+class MonitorNotFoundError(DomainError):
+    code = "monitor_not_found"
+    message = "Монітор не знайдено"
+
+
+class InvalidMonitorConfigError(DomainError):
+    code = "invalid_monitor_config"
+    message = "Некоректні налаштування монітора"

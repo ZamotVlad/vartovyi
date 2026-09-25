@@ -1,18 +1,18 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Check, Monitor
+from app.db.models import Check, Monitor, User
 from app.domain.check import CheckStatus, FailureReason
 from app.repositories.check import CheckRepository
 from app.repositories.monitor import MonitorRepository
 from tests.factories import at, make_monitor
 
 
-async def create_monitor(session: AsyncSession) -> Monitor:
-    return await MonitorRepository(session).add(make_monitor())
+async def create_monitor(session: AsyncSession, owner: User) -> Monitor:
+    return await MonitorRepository(session).add(make_monitor(owner.id))
 
 
-async def test_enums_roundtrip_as_domain_types(db_session: AsyncSession) -> None:
-    monitor = await create_monitor(db_session)
+async def test_enums_roundtrip_as_domain_types(db_session: AsyncSession, owner: User) -> None:
+    monitor = await create_monitor(db_session, owner)
     repo = CheckRepository(db_session)
     await repo.add(
         Check(
@@ -31,8 +31,8 @@ async def test_enums_roundtrip_as_domain_types(db_session: AsyncSession) -> None
     assert latest.failure is FailureReason.TIMEOUT
 
 
-async def test_latest_returns_most_recent(db_session: AsyncSession) -> None:
-    monitor = await create_monitor(db_session)
+async def test_latest_returns_most_recent(db_session: AsyncSession, owner: User) -> None:
+    monitor = await create_monitor(db_session, owner)
     repo = CheckRepository(db_session)
     await repo.add(
         Check(monitor_id=monitor.id, status=CheckStatus.DOWN, elapsed_ms=1, created_at=at(1))
@@ -47,14 +47,16 @@ async def test_latest_returns_most_recent(db_session: AsyncSession) -> None:
     assert latest.status is CheckStatus.UP
 
 
-async def test_latest_is_none_without_checks(db_session: AsyncSession) -> None:
-    monitor = await create_monitor(db_session)
+async def test_latest_is_none_without_checks(db_session: AsyncSession, owner: User) -> None:
+    monitor = await create_monitor(db_session, owner)
     assert await CheckRepository(db_session).latest(monitor.id) is None
 
 
-async def test_statuses_since_is_chronological_and_windowed(db_session: AsyncSession) -> None:
-    monitor = await create_monitor(db_session)
-    other = await create_monitor(db_session)
+async def test_statuses_since_is_chronological_and_windowed(
+    db_session: AsyncSession, owner: User
+) -> None:
+    monitor = await create_monitor(db_session, owner)
+    other = await create_monitor(db_session, owner)
     repo = CheckRepository(db_session)
     history = [
         (at(0), CheckStatus.DOWN),  # поза вікном
@@ -75,8 +77,8 @@ async def test_statuses_since_is_chronological_and_windowed(db_session: AsyncSes
     assert list(statuses) == [CheckStatus.UP, CheckStatus.DOWN, CheckStatus.DEGRADED]
 
 
-async def test_list_for_monitor_newest_first(db_session: AsyncSession) -> None:
-    monitor = await create_monitor(db_session)
+async def test_list_for_monitor_newest_first(db_session: AsyncSession, owner: User) -> None:
+    monitor = await create_monitor(db_session, owner)
     repo = CheckRepository(db_session)
     for minute in range(3):
         await repo.add(

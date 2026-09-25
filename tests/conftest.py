@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.pool import NullPool
 
 from app.api.deps import get_redis, get_session
+from app.core import security
+from app.db.models import User
 from app.main import create_app
+from app.repositories.user import UserRepository
+from tests.factories import make_user
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
@@ -67,6 +71,11 @@ async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
 
 
 @pytest.fixture
+async def owner(db_session: AsyncSession) -> User:
+    return await UserRepository(db_session).add(make_user())
+
+
+@pytest.fixture
 async def redis() -> AsyncIterator[FakeRedis]:
     client = FakeRedis(decode_responses=True)
     try:
@@ -84,3 +93,9 @@ async def client(db_session: AsyncSession, redis: FakeRedis) -> AsyncIterator[As
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as http:
         yield http
+
+
+@pytest.fixture(autouse=True, scope="session")
+def fast_password_hashing() -> None:
+    # Мінімальна вартість bcrypt: у тестах перевіряємо логіку, а не стійкість до перебору
+    security._pwd_context.update(bcrypt__rounds=4)

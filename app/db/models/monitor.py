@@ -1,6 +1,7 @@
+import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Integer, String, true
+from sqlalchemy import Boolean, ForeignKey, Integer, String, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -16,6 +17,9 @@ class Monitor(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # інакше доступ до них після flush спричинить lazy load в async-контексті
     __mapper_args__ = {"eager_defaults": True}
 
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     name: Mapped[str] = mapped_column(String(100))
     url: Mapped[str] = mapped_column(String(2048))
     interval_seconds: Mapped[int] = mapped_column(Integer)

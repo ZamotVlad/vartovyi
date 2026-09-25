@@ -12,6 +12,7 @@ from app.domain.errors import InvalidTokenError
 from app.repositories.token_blacklist import TokenBlacklist
 from app.services.api_key import ApiKeyService
 from app.services.auth import AuthService
+from app.services.monitor import MonitorService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -101,3 +102,10 @@ async def require_bearer_token(token: BearerTokenDep) -> str:
 
 
 RequiredBearerTokenDep = Annotated[str, Depends(require_bearer_token)]
+
+
+def get_monitor_service(session: SessionDep) -> MonitorService:
+    return MonitorService(session)
+
+
+MonitorServiceDep = Annotated[MonitorService, Depends(get_monitor_service)]

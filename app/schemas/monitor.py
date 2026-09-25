@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, model_validator
 
+from app.domain.monitor import MonitorSort, MonitorTiming, timing_violation
+
 Name = Annotated[str, Field(min_length=1, max_length=100)]
 IntervalSeconds = Annotated[int, Field(ge=30, le=86_400)]
 TimeoutMs = Annotated[int, Field(ge=100, le=60_000)]
@@ -26,16 +28,9 @@ class MonitorCreate(BaseModel):
 
     @model_validator(mode="after")
     def check_time_budget(self) -> Self:
-        if self.timeout_ms > self.interval_seconds * 1000:
-            raise ValueError(
-                "timeout_ms не може перевищувати interval_seconds: "
-                "перевірки почнуть накладатись одна на одну"
-            )
-        if self.max_response_ms is not None and self.max_response_ms > self.timeout_ms:
-            raise ValueError(
-                "max_response_ms не може перевищувати timeout_ms: "
-                "поріг деградації недосяжний, з'єднання обірветься раніше"
-            )
+        timing = MonitorTiming(self.interval_seconds, self.timeout_ms, self.max_response_ms)
+        if violation := timing_violation(timing):
+            raise ValueError(violation)
         return self
 
 
@@ -53,6 +48,15 @@ class MonitorUpdate(BaseModel):
     keyword: Keyword | None = None
     is_active: bool | None = None
 
+    @model_validator(mode="after")
+    def forbid_null_for_required_fields(self) -> Self:
+        # null дозволений лише там, де він має зміст "прибрати значення"
+        nullable = {"max_response_ms", "keyword"}
+        for field in self.model_fields_set - nullable:
+            if getattr(self, field) is None:
+                raise ValueError(f"Поле {field} не може бути null")
+        return self
+
 
 class MonitorRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -68,3 +72,17 @@ class MonitorRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class MonitorFilter(BaseModel):
+    """Параметри списку. Використовується як Query-модель."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+    is_active: bool | None = None
+    search: str | None = Field(
+        default=None, min_length=1, max_length=100, description="Підрядок у назві або URL"
+    )
+    sort: MonitorSort = MonitorSort.CREATED_DESC
