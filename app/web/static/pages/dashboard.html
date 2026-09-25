@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/fonts.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <title>Монітори - Vartovyi</title>
+  <script src="/static/js/api.js" defer></script>
+  <script src="/static/js/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="lamp lamp--live" aria-hidden="true"></span>Vartovyi</a>
+    <div class="topbar__right">
+      <span class="data muted" id="user-email"></span>
+      <button class="linkbtn" type="button" id="logout">Вийти</button>
+    </div>
+  </header>
+
+  <p class="page loading muted" id="boot">Завантаження панелі...</p>
+
+  <main class="page dashboard" id="app" hidden>
+    <section class="dashboard__main" aria-labelledby="monitors-title">
+      <div class="section-head">
+        <h1 id="monitors-title">Монітори</h1>
+        <div class="tally" id="tally" aria-live="polite"></div>
+      </div>
+
+      <div class="notice" id="load-error" role="alert" hidden>
+        <span id="load-error-text"></span>
+        <button class="linkbtn" type="button" id="retry">Спробувати ще раз</button>
+      </div>
+
+      <div class="empty" id="empty" hidden>
+        <span class="lamp lamp--live" aria-hidden="true"></span>
+        <div>
+          <h2>Тут з'являться ваші сигнали</h2>
+          <p class="muted">
+            Додайте перший монітор: вкажіть адресу сайту чи API, і Vartovyi перевірятиме
+            його за розкладом. Перший результат з'явиться за кілька секунд.
+          </p>
+          <a class="btn" href="#name">Додати перший монітор</a>
+        </div>
+      </div>
+
+      <ul class="signals signals--dashboard" id="monitors"></ul>
+      <p class="muted refreshed" id="refreshed"></p>
+    </section>
+
+    <aside class="dashboard__side">
+      <section class="panel" aria-labelledby="create-title">
+        <h2 id="create-title">Новий монітор</h2>
+        <form id="create-form" novalidate>
+          <p class="notice" id="create-error" role="alert" hidden></p>
+          <div class="field">
+            <label for="name">Назва</label>
+            <input id="name" name="name" type="text" maxlength="100" required placeholder="API продакшн" aria-describedby="name-error">
+            <span class="field__error" id="name-error" aria-live="polite"></span>
+          </div>
+          <div class="field">
+            <label for="url">Адреса</label>
+            <input class="data" id="url" name="url" type="url" required placeholder="https://example.com/health" aria-describedby="url-error">
+            <span class="field__error" id="url-error" aria-live="polite"></span>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="interval_seconds">Інтервал, с</label>
+              <input class="data" id="interval_seconds" name="interval_seconds" type="number" min="30" max="86400" value="60" required aria-describedby="interval_seconds-error">
+              <span class="field__error" id="interval_seconds-error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="timeout_ms">Таймаут, мс</label>
+              <input class="data" id="timeout_ms" name="timeout_ms" type="number" min="100" max="60000" value="10000" required aria-describedby="timeout_ms-error">
+              <span class="field__error" id="timeout_ms-error" aria-live="polite"></span>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="expected_status">Очікуваний код</label>
+              <input class="data" id="expected_status" name="expected_status" type="number" min="100" max="599" value="200" required aria-describedby="expected_status-error">
+              <span class="field__error" id="expected_status-error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="max_response_ms">Поріг повільності, мс</label>
+              <input class="data" id="max_response_ms" name="max_response_ms" type="number" min="1" max="60000" placeholder="не задано" aria-describedby="max_response_ms-error">
+              <span class="field__error" id="max_response_ms-error" aria-live="polite"></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="keyword">Ключове слово у відповіді</label>
+            <input id="keyword" name="keyword" type="text" maxlength="200" placeholder="необов'язково" aria-describedby="keyword-error">
+            <span class="field__error" id="keyword-error" aria-live="polite"></span>
+          </div>
+          <label class="check"><input type="checkbox" name="is_public"> Показувати на сторінці статусу</label>
+          <button class="btn" type="submit">Додати монітор</button>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="status-title">
+        <h2 id="status-title">Сторінка статусу</h2>
+        <div id="status-link" hidden>
+          <p class="muted">Публічні монітори видно всім за адресою:</p>
+          <p><a class="data" id="status-url" href="#" target="_blank" rel="noopener"></a></p>
+          <button class="linkbtn" type="button" id="status-edit">Змінити адресу</button>
+        </div>
+        <form id="slug-form" novalidate hidden>
+          <p class="muted">Оберіть адресу, щоб показати публічні монітори клієнтам.</p>
+          <div class="field">
+            <label for="status_slug">Адреса сторінки</label>
+            <div class="slug-input">
+              <span class="data muted">/status/</span>
+              <input class="data" id="status_slug" name="status_slug" type="text" maxlength="50" placeholder="my-company" autocomplete="off" aria-describedby="status_slug-hint status_slug-error">
+            </div>
+            <span class="field__hint" id="status_slug-hint">Малі латинські літери, цифри й дефіс, від 3 символів</span>
+            <span class="field__error" id="status_slug-error" aria-live="polite"></span>
+          </div>
+          <button class="btn" type="submit">Зберегти адресу</button>
+        </form>
+      </section>
+    </aside>
+  </main>
+</body>
+</html>

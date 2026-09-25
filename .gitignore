@@ -19,5 +19,7 @@ wheels/
 htmlcov/
 .coverage
 
+docs/
+
 #Claude
 CLAUDE.md

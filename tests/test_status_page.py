@@ -178,7 +178,7 @@ async def test_html_page_is_served_without_auth(client: AsyncClient) -> None:
 
 @pytest.mark.parametrize(
     ("path", "content_type"),
-    [("/static/status/status.js", "javascript"), ("/static/status/status.css", "text/css")],
+    [("/static/status/status.js", "javascript"), ("/static/css/app.css", "text/css")],
 )
 async def test_static_assets_are_served(client: AsyncClient, path: str, content_type: str) -> None:
     response = await client.get(path)
