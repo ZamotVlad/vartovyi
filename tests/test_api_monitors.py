@@ -203,3 +203,16 @@ async def test_monitor_endpoints_require_auth(client: AsyncClient, alice: dict[s
     assert (await client.get(url)).status_code == 401
     assert (await client.patch(url, json={"name": "x"})).status_code == 401
     assert (await client.delete(url)).status_code == 401
+
+
+async def test_patch_url_is_normalized_and_saved(
+    client: AsyncClient, alice: dict[str, str]
+) -> None:
+    created = await create(client, alice)
+    url = f"{MONITORS}/{created['id']}"
+
+    response = await client.patch(url, json={"url": "https://new.example.com/ping"}, headers=alice)
+
+    assert response.json()["url"] == "https://new.example.com/ping"
+    bad = await client.patch(url, json={"url": "not a url"}, headers=alice)
+    assert bad.status_code == 422

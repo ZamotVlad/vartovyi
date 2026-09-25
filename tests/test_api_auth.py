@@ -197,3 +197,26 @@ async def test_logout_cannot_revoke_someone_elses_refresh(client: AsyncClient) -
     assert response.status_code == 401
     still_valid = await client.post(f"{AUTH}/refresh", json={"refresh_token": bob["refresh_token"]})
     assert still_valid.status_code == 200
+
+
+async def test_refresh_for_deactivated_user(client: AsyncClient, db_session: AsyncSession) -> None:
+    await register(client)
+    tokens = await login(client)
+    await deactivate(db_session, "user@example.com")
+
+    response = await client.post(f"{AUTH}/refresh", json={"refresh_token": tokens["refresh_token"]})
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "inactive_user"
+
+
+async def test_api_key_of_deactivated_user_is_forbidden(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    headers = await auth_headers(client)
+    created = await client.post(f"{AUTH}/api-keys", json={"name": "ci"}, headers=headers)
+    await deactivate(db_session, "user@example.com")
+
+    response = await client.get(f"{AUTH}/me", headers={"X-API-Key": created.json()["key"]})
+
+    assert response.status_code == 403

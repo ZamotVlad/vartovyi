@@ -53,3 +53,12 @@ dev = [
     "ruff>=0.16.5",
     "types-passlib>=1.7.7.20260211",
 ]
+
+[tool.coverage.run]
+source = ["app"]
+# SQLAlchemy async перемикає greenlet-и, без цього coverage губить рядки після await
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
