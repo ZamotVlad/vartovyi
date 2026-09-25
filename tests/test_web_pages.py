@@ -1,8 +1,10 @@
 from pathlib import Path
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
+from app.config import Settings
+from app.main import create_app
 from app.web.routes import STATIC_DIR
 
 PAGES = ["/", "/login", "/register", "/dashboard", "/status/demo"]
@@ -52,3 +54,42 @@ def test_scripts_never_insert_html() -> None:
     for script in Path(STATIC_DIR).rglob("*.js"):
         assert "innerHTML" not in script.read_text(), script
         assert "insertAdjacentHTML" not in script.read_text(), script
+
+
+async def test_unknown_page_in_browser_gets_html_404(client: AsyncClient) -> None:
+    response = await client.get("/no-such-page", headers={"Accept": "text/html"})
+
+    assert response.status_code == 404
+    assert response.headers["content-type"].startswith("text/html")
+    assert "HTTP 404" in response.text
+
+
+async def test_unknown_api_path_stays_json_even_for_browser(client: AsyncClient) -> None:
+    response = await client.get("/api/v1/nope", headers={"Accept": "text/html"})
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "not_found"
+
+
+async def test_crash_in_browser_gets_html_500() -> None:
+    app = create_app(Settings())
+
+    @app.get("/explode", include_in_schema=False)
+    async def explode() -> None:
+        raise RuntimeError("boom")
+
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://test") as http:
+        page = await http.get("/explode", headers={"Accept": "text/html"})
+        api = await http.get("/explode", headers={"Accept": "application/json"})
+
+    assert page.status_code == api.status_code == 500
+    assert "HTTP 500" in page.text
+    assert "boom" not in page.text
+    assert api.json()["error"]["code"] == "internal_error"
+
+
+def test_error_pages_do_not_depend_on_scripts() -> None:
+    # Сторінка 500 має працювати, навіть коли щось зламано: тільки HTML і CSS
+    for name in ("404.html", "500.html"):
+        assert "<script" not in (STATIC_DIR / "pages" / name).read_text()

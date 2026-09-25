@@ -8,6 +8,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.request_context import request_id_var
 from app.schemas.common import ErrorDetail, ErrorResponse
+from app.web.errors import error_page, wants_html
 
 logger = logging.getLogger("app.request")
 
@@ -66,7 +67,8 @@ class RequestContextMiddleware:
             if response_started:
                 # Заголовки вже пішли клієнту, змінити статус неможливо
                 raise
-            await _send_internal_error(send_wrapper)
+            accept = Headers(scope=scope).get("accept", "")
+            await _send_internal_error(send_wrapper, html=wants_html(scope["path"], accept))
         finally:
             logger.info(
                 "%s %s %s",
@@ -87,15 +89,20 @@ def _elapsed_ms(started: float) -> float:
     return (time.perf_counter() - started) * 1000
 
 
-async def _send_internal_error(send: Send) -> None:
+async def _send_internal_error(send: Send, *, html: bool) -> None:
+    body, content_type = (
+        (error_page(500), b"text/html; charset=utf-8")
+        if html
+        else (_INTERNAL_ERROR_BODY, b"application/json")
+    )
     await send(
         {
             "type": "http.response.start",
             "status": 500,
             "headers": [
-                (b"content-type", b"application/json"),
-                (b"content-length", str(len(_INTERNAL_ERROR_BODY)).encode()),
+                (b"content-type", content_type),
+                (b"content-length", str(len(body)).encode()),
             ],
         }
     )
-    await send({"type": "http.response.body", "body": _INTERNAL_ERROR_BODY})
+    await send({"type": "http.response.body", "body": body})

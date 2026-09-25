@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#14171c">
   <link rel="stylesheet" href="/static/css/fonts.css">
   <link rel="stylesheet" href="/static/css/app.css">
   <title>Монітори - Vartovyi</title>
@@ -50,7 +52,7 @@
     </section>
 
     <aside class="dashboard__side">
-      <section class="panel" aria-labelledby="create-title">
+      <section class="panel surface" aria-labelledby="create-title">
         <h2 id="create-title">Новий монітор</h2>
         <form id="create-form" novalidate>
           <p class="notice" id="create-error" role="alert" hidden></p>
@@ -93,16 +95,16 @@
             <input id="keyword" name="keyword" type="text" maxlength="200" placeholder="необов'язково" aria-describedby="keyword-error">
             <span class="field__error" id="keyword-error" aria-live="polite"></span>
           </div>
-          <label class="check"><input type="checkbox" name="is_public"> Показувати на сторінці статусу</label>
+          <label class="check"><input class="switch" type="checkbox" role="switch" name="is_public"> Показувати на сторінці статусу</label>
           <button class="btn" type="submit">Додати монітор</button>
         </form>
       </section>
 
-      <section class="panel" aria-labelledby="status-title">
+      <section class="panel surface" aria-labelledby="status-title">
         <h2 id="status-title">Сторінка статусу</h2>
         <div id="status-link" hidden>
           <p class="muted">Публічні монітори видно всім за адресою:</p>
-          <p><a class="data" id="status-url" href="#" target="_blank" rel="noopener"></a></p>
+          <p><a class="data" id="status-url" href="#"></a></p>
           <button class="linkbtn" type="button" id="status-edit">Змінити адресу</button>
         </div>
         <form id="slug-form" novalidate hidden>

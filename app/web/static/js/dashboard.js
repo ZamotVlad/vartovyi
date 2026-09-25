@@ -93,6 +93,8 @@
     const publicToggle = el("label", "check");
     const box = document.createElement("input");
     box.type = "checkbox";
+    box.className = "switch";
+    box.setAttribute("role", "switch");
     box.checked = monitor.is_public;
     box.dataset.action = "public";
     publicToggle.append(box, el("span", "signal__state", "Публічний"));
