@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from app.domain.check import CheckStatus, is_available
@@ -33,6 +33,14 @@ def summarize(statuses: Sequence[CheckStatus]) -> UptimeSummary:
         degraded=counts[CheckStatus.DEGRADED],
         down=counts[CheckStatus.DOWN],
     )
+
+
+def summarize_counts(counts: Mapping[CheckStatus, int]) -> UptimeSummary:
+    """Те саме, що summarize, але з уже агрегованих лічильників (наприклад, з БД)."""
+    up = counts.get(CheckStatus.UP, 0)
+    degraded = counts.get(CheckStatus.DEGRADED, 0)
+    down = counts.get(CheckStatus.DOWN, 0)
+    return UptimeSummary(total=up + degraded + down, up=up, degraded=degraded, down=down)
 
 
 def longest_down_streak(statuses: Sequence[CheckStatus]) -> int:

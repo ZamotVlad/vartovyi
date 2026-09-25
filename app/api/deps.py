@@ -16,6 +16,8 @@ from app.services.api_key import ApiKeyService
 from app.services.auth import AuthService
 from app.services.check import CheckService
 from app.services.monitor import MonitorService
+from app.services.status_page import StatusPageService
+from app.services.user import UserService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -115,3 +117,15 @@ def get_check_service(session: SessionDep, settings: SettingsDep) -> CheckServic
 
 
 CheckServiceDep = Annotated[CheckService, Depends(get_check_service)]
+
+
+def get_user_service(session: SessionDep) -> UserService:
+    return UserService(session)
+
+
+def get_status_page_service(session: SessionDep) -> StatusPageService:
+    return StatusPageService(session)
+
+
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+StatusPageServiceDep = Annotated[StatusPageService, Depends(get_status_page_service)]

@@ -22,13 +22,31 @@ class UserCreate(BaseModel):
     password: Password
 
 
+StatusSlug = Annotated[
+    str,
+    Field(
+        min_length=3,
+        max_length=50,
+        pattern=r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+        description="Адреса публічної сторінки: /status/{slug}",
+    ),
+]
+
+
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     email: str
     is_active: bool
+    status_slug: str | None
     created_at: datetime
+
+
+class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status_slug: StatusSlug | None = Field(description="null вимикає публічну сторінку статусу")
 
 
 class TokenPair(BaseModel):

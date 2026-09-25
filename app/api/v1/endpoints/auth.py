@@ -9,6 +9,7 @@ from app.api.deps import (
     ApiKeyServiceDep,
     AuthServiceDep,
     CurrentUserDep,
+    UserServiceDep,
 )
 from app.api.errors import ERROR_RESPONSES
 from app.db.models import User
@@ -20,6 +21,7 @@ from app.schemas.auth import (
     TokenPair,
     UserCreate,
     UserRead,
+    UserUpdate,
 )
 from app.schemas.common import ErrorResponse
 
@@ -57,6 +59,15 @@ async def logout(data: RefreshRequest, access: AccessClaimsDep, auth: AuthServic
 @router.get("/me", response_model=UserRead)
 async def me(user: CurrentUserDep) -> User:
     return user
+
+
+@router.patch(
+    "/me",
+    response_model=UserRead,
+    responses={status.HTTP_409_CONFLICT: {"model": ErrorResponse}},
+)
+async def update_me(data: UserUpdate, user: CurrentUserDep, users: UserServiceDep) -> User:
+    return await users.update(user, data)
 
 
 @router.post("/api-keys", response_model=ApiKeyCreated, status_code=status.HTTP_201_CREATED)

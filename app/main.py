@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from redis.asyncio import Redis
 
 from app.api.errors import register_exception_handlers
@@ -15,6 +16,8 @@ from app.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.db.session import create_engine, create_sessionmaker
 from app.services.scheduler import run_scheduler
+from app.web.routes import STATIC_DIR
+from app.web.routes import router as web_router
 
 
 @asynccontextmanager
@@ -61,6 +64,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    app.include_router(web_router)
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     register_exception_handlers(app)
 
     # Останній доданий middleware - зовнішній. CORS зовні, щоб навіть

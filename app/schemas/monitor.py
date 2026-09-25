@@ -26,6 +26,7 @@ class MonitorCreate(BaseModel):
     max_response_ms: ResponseThresholdMs | None = None
     keyword: Keyword | None = None
     is_active: bool = True
+    is_public: bool = False
 
     @model_validator(mode="after")
     def check_time_budget(self) -> Self:
@@ -48,6 +49,7 @@ class MonitorUpdate(BaseModel):
     max_response_ms: ResponseThresholdMs | None = None
     keyword: Keyword | None = None
     is_active: bool | None = None
+    is_public: bool | None = None
 
     @model_validator(mode="after")
     def forbid_null_for_required_fields(self) -> Self:
@@ -71,6 +73,7 @@ class MonitorRead(BaseModel):
     max_response_ms: int | None
     keyword: str | None
     is_active: bool
+    is_public: bool
     last_checked_at: datetime | None
     created_at: datetime
     updated_at: datetime

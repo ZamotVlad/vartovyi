@@ -38,3 +38,8 @@ class MonitorStatusRead(BaseModel):
     uptime_24h: UptimeRead
     uptime_7d: UptimeRead
     uptime_30d: UptimeRead
+
+
+class StatusPageRead(BaseModel):
+    monitors: list[MonitorStatusRead]
+    generated_at: datetime

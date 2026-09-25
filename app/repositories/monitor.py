@@ -65,6 +65,15 @@ class MonitorRepository(SqlRepository):
         )
         return page.all(), total or 0
 
+    async def list_public(self, owner_id: uuid.UUID) -> Sequence[Monitor]:
+        stmt = (
+            select(Monitor)
+            .where(Monitor.owner_id == owner_id, Monitor.is_public.is_(True))
+            .order_by(Monitor.name, Monitor.id)
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
+
     async def list_due(self, now: datetime) -> Sequence[Monitor]:
         """Активні монітори, які ще не перевірялись або чий інтервал минув."""
         next_due = Monitor.last_checked_at + Monitor.interval_seconds * timedelta(seconds=1)

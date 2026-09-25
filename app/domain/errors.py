@@ -80,3 +80,13 @@ class MonitorNotFoundError(NotFoundError):
 class InvalidMonitorConfigError(RuleViolationError):
     code = "invalid_monitor_config"
     message = "Некоректні налаштування монітора"
+
+
+class StatusSlugTakenError(ConflictError):
+    code = "status_slug_taken"
+    message = "Ця адреса сторінки статусу вже зайнята"
+
+
+class StatusPageNotFoundError(NotFoundError):
+    code = "status_page_not_found"
+    message = "Сторінку статусу не знайдено"

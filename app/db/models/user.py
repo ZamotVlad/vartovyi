@@ -17,6 +17,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(320), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    # Адреса публічної сторінки статусу /status/{slug}. None - сторінки немає
+    status_slug: Mapped[str | None] = mapped_column(String(50), unique=True)
 
     api_keys: Mapped[list["ApiKey"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
