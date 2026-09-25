@@ -18,7 +18,7 @@ _VALID_REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 _INTERNAL_ERROR_BODY = (
     ErrorResponse(error=ErrorDetail(code="internal_error", message="Внутрішня помилка сервера"))
-    .model_dump_json()
+    .model_dump_json(exclude_none=True)
     .encode()
 )
 

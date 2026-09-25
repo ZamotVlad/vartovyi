@@ -2,14 +2,14 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import Settings, get_settings
 from app.db.models import User
-from app.domain.errors import InvalidTokenError
+from app.domain.errors import InactiveUserError, NotAuthenticatedError
 from app.repositories.token_blacklist import TokenBlacklist
 from app.services.api_key import ApiKeyService
 from app.services.auth import AuthService
@@ -70,35 +70,22 @@ BearerTokenDep = Annotated[str | None, Depends(oauth2_scheme)]
 ApiKeyHeaderDep = Annotated[str | None, Depends(api_key_scheme)]
 
 
-def _unauthorized() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=InvalidTokenError.message,
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-
 async def get_current_user(
     auth: AuthServiceDep, token: BearerTokenDep, api_key: ApiKeyHeaderDep
 ) -> User:
     """Користувач за Bearer-токеном або, для скриптів і CI, за X-API-Key."""
-    try:
-        if token is not None:
-            return await auth.user_from_access_token(token)
-        if api_key is not None:
-            return await auth.user_from_api_key(api_key)
-    except InvalidTokenError as exc:
-        raise _unauthorized() from exc
-    raise _unauthorized()
+    if token is not None:
+        return await auth.user_from_access_token(token)
+    if api_key is not None:
+        return await auth.user_from_api_key(api_key)
+    raise NotAuthenticatedError
 
 
 async def get_current_active_user(
     user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Обліковий запис деактивовано"
-        )
+        raise InactiveUserError
     return user
 
 
@@ -107,7 +94,7 @@ CurrentUserDep = Annotated[User, Depends(get_current_active_user)]
 
 async def require_bearer_token(token: BearerTokenDep) -> str:
     if token is None:
-        raise _unauthorized()
+        raise NotAuthenticatedError
     return token
 
 

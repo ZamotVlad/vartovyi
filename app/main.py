@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
+from app.api.errors import register_exception_handlers
 from app.api.middleware import REQUEST_ID_HEADER, TIMING_HEADER, RequestContextMiddleware
 from app.api.v1.router import api_router
 from app.config import Settings, get_settings
@@ -60,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.include_router(api_router, prefix=settings.api_v1_prefix)
+    register_exception_handlers(app)
 
     # Останній доданий middleware - зовнішній. CORS зовні, щоб навіть
     # відповідь 500 від RequestContextMiddleware отримала CORS-заголовки

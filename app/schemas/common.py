@@ -23,7 +23,12 @@ class ErrorDetail(BaseModel):
 
 
 class ErrorResponse(BaseModel):
+    """Єдиний формат тіла помилки для всього API."""
+
     error: ErrorDetail
+    details: list[ErrorDetail] | None = Field(
+        default=None, description="Усі помилки валідації, якщо їх кілька"
+    )
 
 
 class PageParams(BaseModel):

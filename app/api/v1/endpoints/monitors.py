@@ -1,16 +1,16 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Query, status
 
 from app.api.deps import CheckServiceDep, CurrentUserDep, HttpClientDep, MonitorServiceDep
+from app.api.errors import ERROR_RESPONSES
 from app.db.models import Check, Monitor
-from app.domain.errors import InvalidMonitorConfigError, MonitorNotFoundError
 from app.schemas.check import CheckRead
 from app.schemas.common import Page, PageParams
 from app.schemas.monitor import MonitorCreate, MonitorFilter, MonitorRead, MonitorUpdate
 
-router = APIRouter(prefix="/monitors", tags=["monitors"])
+router = APIRouter(prefix="/monitors", tags=["monitors"], responses=ERROR_RESPONSES)
 
 
 @router.post("", response_model=MonitorRead, status_code=status.HTTP_201_CREATED)
@@ -37,32 +37,21 @@ async def list_monitors(
 async def get_monitor(
     monitor_id: uuid.UUID, user: CurrentUserDep, monitors: MonitorServiceDep
 ) -> Monitor:
-    try:
-        return await monitors.get(user, monitor_id)
-    except MonitorNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, exc.detail) from exc
+    return await monitors.get(user, monitor_id)
 
 
 @router.patch("/{monitor_id}", response_model=MonitorRead)
 async def update_monitor(
     monitor_id: uuid.UUID, data: MonitorUpdate, user: CurrentUserDep, monitors: MonitorServiceDep
 ) -> Monitor:
-    try:
-        return await monitors.update(user, monitor_id, data)
-    except MonitorNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, exc.detail) from exc
-    except InvalidMonitorConfigError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, exc.detail) from exc
+    return await monitors.update(user, monitor_id, data)
 
 
 @router.delete("/{monitor_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_monitor(
     monitor_id: uuid.UUID, user: CurrentUserDep, monitors: MonitorServiceDep
 ) -> None:
-    try:
-        await monitors.delete(user, monitor_id)
-    except MonitorNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, exc.detail) from exc
+    await monitors.delete(user, monitor_id)
 
 
 @router.post(
@@ -77,10 +66,7 @@ async def run_check(
     checks: CheckServiceDep,
     client: HttpClientDep,
 ) -> Check:
-    try:
-        return await checks.run_now(user, monitor_id, client)
-    except MonitorNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, exc.detail) from exc
+    return await checks.run_now(user, monitor_id, client)
 
 
 @router.get("/{monitor_id}/checks", response_model=Page[CheckRead])
@@ -90,12 +76,9 @@ async def list_checks(
     user: CurrentUserDep,
     checks: CheckServiceDep,
 ) -> Page[CheckRead]:
-    try:
-        items, total = await checks.list_for_monitor(
-            user, monitor_id, limit=params.limit, offset=params.offset
-        )
-    except MonitorNotFoundError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, exc.detail) from exc
+    items, total = await checks.list_for_monitor(
+        user, monitor_id, limit=params.limit, offset=params.offset
+    )
     return Page(
         items=[CheckRead.model_validate(c) for c in items],
         total=total,

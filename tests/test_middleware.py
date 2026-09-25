@@ -71,7 +71,7 @@ async def test_unhandled_exception_becomes_uniform_500(
 
     assert response.status_code == 500
     assert response.json() == {
-        "error": {"code": "internal_error", "message": "Внутрішня помилка сервера", "field": None}
+        "error": {"code": "internal_error", "message": "Внутрішня помилка сервера"}
     }
     assert "secret internal detail" not in response.text
     assert response.headers["x-request-id"] == "req-1"
