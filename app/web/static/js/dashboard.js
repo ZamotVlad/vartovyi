@@ -93,6 +93,8 @@
     const publicToggle = el("label", "check");
     const box = document.createElement("input");
     box.type = "checkbox";
+    box.className = "switch";
+    box.setAttribute("role", "switch");
     box.checked = monitor.is_public;
     box.dataset.action = "public";
     publicToggle.append(box, el("span", "signal__state", "Публічний"));
@@ -140,15 +142,10 @@
 
   async function loadMonitors() {
     try {
+      // Остання перевірка приходить разом зі списком, один запит на весь дашборд
       const page = await Api.request("/monitors?limit=100&sort=name");
-      // Останній стан кожного монітора. Паралельно, бо на сторінці до 100 рядків
-      const latest = await Promise.all(
-        page.items.map((m) =>
-          Api.request(`/monitors/${m.id}/checks?limit=1`).then((p) => [m.id, p.items[0]])
-        )
-      );
       state.monitors = page.items;
-      state.latest = new Map(latest.filter(([, check]) => check));
+      state.latest = new Map(page.items.filter((m) => m.latest_check).map((m) => [m.id, m.latest_check]));
       showLoadError(null);
       render();
     } catch (error) {

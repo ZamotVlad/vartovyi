@@ -31,6 +31,8 @@ class CheckRepository(SqlRepository):
         return counts
 
     async def latest_for_monitors(self, monitor_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, Check]:
+        if not monitor_ids:
+            return {}
         # DISTINCT ON - один запит замість N на кожен монітор
         stmt = (
             select(Check)

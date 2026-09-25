@@ -8,7 +8,13 @@ from app.api.errors import ERROR_RESPONSES
 from app.db.models import Check, Monitor
 from app.schemas.check import CheckRead
 from app.schemas.common import Page, PageParams
-from app.schemas.monitor import MonitorCreate, MonitorFilter, MonitorRead, MonitorUpdate
+from app.schemas.monitor import (
+    MonitorCreate,
+    MonitorFilter,
+    MonitorListItem,
+    MonitorRead,
+    MonitorUpdate,
+)
 
 router = APIRouter(prefix="/monitors", tags=["monitors"], responses=ERROR_RESPONSES)
 
@@ -20,13 +26,13 @@ async def create_monitor(
     return await monitors.create(user, data)
 
 
-@router.get("", response_model=Page[MonitorRead])
+@router.get("", response_model=Page[MonitorListItem])
 async def list_monitors(
     params: Annotated[MonitorFilter, Query()], user: CurrentUserDep, monitors: MonitorServiceDep
-) -> Page[MonitorRead]:
+) -> Page[MonitorListItem]:
     items, total = await monitors.list(user, params)
     return Page(
-        items=[MonitorRead.model_validate(m) for m in items],
+        items=items,
         total=total,
         limit=params.limit,
         offset=params.offset,

@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.domain.errors import (
@@ -18,6 +18,7 @@ from app.domain.errors import (
     RuleViolationError,
 )
 from app.schemas.common import ErrorDetail, ErrorResponse
+from app.web.errors import error_page, wants_html
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,10 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     return _response(status.HTTP_422_UNPROCESSABLE_CONTENT, summary, details)
 
 
-async def http_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+async def http_error_handler(request: Request, exc: StarletteHTTPException) -> Response:
     # Помилки маршрутизації Starlette (404 невідомий шлях, 405 метод) - в тому ж форматі
+    if exc.status_code == 404 and wants_html(request.url.path, request.headers.get("accept", "")):
+        return HTMLResponse(error_page(404), status_code=404)
     phrase = HTTPStatus(exc.status_code).phrase
     code = phrase.lower().replace(" ", "_").replace("-", "_")
     message = exc.detail if isinstance(exc.detail, str) else phrase

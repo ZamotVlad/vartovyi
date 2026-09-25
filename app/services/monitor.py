@@ -1,13 +1,14 @@
 import uuid
-from collections.abc import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Monitor, User
 from app.domain.errors import InvalidMonitorConfigError, MonitorNotFoundError
 from app.domain.monitor import MonitorTiming, timing_violation
+from app.repositories.check import CheckRepository
 from app.repositories.monitor import MonitorRepository
-from app.schemas.monitor import MonitorCreate, MonitorFilter, MonitorUpdate
+from app.schemas.check import CheckRead
+from app.schemas.monitor import MonitorCreate, MonitorFilter, MonitorListItem, MonitorUpdate
 
 
 class MonitorService:
@@ -28,8 +29,8 @@ class MonitorService:
             raise MonitorNotFoundError
         return monitor
 
-    async def list(self, owner: User, params: MonitorFilter) -> tuple[Sequence[Monitor], int]:
-        return await self.monitors.list_page(
+    async def list(self, owner: User, params: MonitorFilter) -> tuple[list[MonitorListItem], int]:
+        monitors, total = await self.monitors.list_page(
             owner.id,
             limit=params.limit,
             offset=params.offset,
@@ -37,6 +38,15 @@ class MonitorService:
             search=params.search,
             sort=params.sort,
         )
+        # Один запит DISTINCT ON на всю сторінку замість запиту на кожен монітор
+        latest = await CheckRepository(self.session).latest_for_monitors([m.id for m in monitors])
+        items = []
+        for monitor in monitors:
+            item = MonitorListItem.model_validate(monitor)
+            check = latest.get(monitor.id)
+            item.latest_check = CheckRead.model_validate(check) if check else None
+            items.append(item)
+        return items, total
 
     async def update(self, owner: User, monitor_id: uuid.UUID, data: MonitorUpdate) -> Monitor:
         monitor = await self.get(owner, monitor_id)

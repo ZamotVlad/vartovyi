@@ -47,8 +47,23 @@ a:hover { color: var(--accent); }
 
 /* Шапка і знак: та сама лампа, що показує стан монітора */
 .topbar {
+  position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 24px;
   padding: 16px 24px; border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+}
+/* Тінь під шапкою проявляється в міру скролу, без жодного JS.
+   Де scroll-timeline немає, шапка просто лишається без тіні */
+@supports (animation-timeline: scroll()) {
+  .topbar {
+    animation: lift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 120px;
+  }
+  @keyframes lift {
+    to { box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.7); border-bottom-color: #323843; }
+  }
 }
 .topbar__right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
 
@@ -58,24 +73,41 @@ a:hover { color: var(--accent); }
 }
 .brand:hover { color: var(--text); }
 
+/* Лампа - джерело світла: гаряче ядро, колір і розсіяне світіння навколо.
+   --glow зареєстрована через @property, тож браузер анімує саме число,
+   а не перемикає тінь стрибком */
+@property --glow {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0.6;
+}
+
 .lamp {
   --lamp: var(--unknown);
-  display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-  flex: none; background: var(--lamp);
+  --glow: 0;
+  display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%,
+    color-mix(in srgb, var(--lamp) 35%, #fff) 0 18%, var(--lamp) 55%,
+    color-mix(in srgb, var(--lamp) 70%, #000) 100%);
+  box-shadow:
+    0 0 calc(var(--glow) * 6px) calc(var(--glow) * 1px) color-mix(in srgb, var(--lamp) 70%, transparent),
+    0 0 calc(var(--glow) * 18px) calc(var(--glow) * 3px) color-mix(in srgb, var(--lamp) 28%, transparent);
+  transition: --glow 400ms ease;
 }
-.lamp--live { --lamp: var(--accent); animation: pulse 2.4s ease-in-out infinite; }
-.lamp--up { --lamp: var(--up); }
-.lamp--degraded { --lamp: var(--degraded); }
-.lamp--down { --lamp: var(--down); animation: pulse 2.4s ease-in-out infinite; }
-.brand .lamp { width: 12px; height: 12px; }
+.lamp--up { --lamp: var(--up); --glow: 0.7; }
+.lamp--degraded { --lamp: var(--degraded); --glow: 0.7; }
+.lamp--down { --lamp: var(--down); --glow: 0.8; animation: breathe 1.6s ease-in-out infinite; }
+.lamp--live { --lamp: var(--accent); --glow: 0.7; animation: breathe 2.6s ease-in-out infinite; }
+/* Знак бренду лишається пласким кольором, світиться лише ореол */
+.brand .lamp { width: 12px; height: 12px; background: var(--lamp); }
 
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp) 55%, transparent); }
-  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--lamp) 0%, transparent); }
+@keyframes breathe {
+  0%, 100% { --glow: 0.45; }
+  50% { --glow: 1.1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lamp--live, .lamp--down { animation: none; }
+  .lamp { animation: none !important; transition: none; }
 }
 
 .page { max-width: 1120px; padding: 40px 24px 64px; }
@@ -91,9 +123,22 @@ h2 { font-size: 1.25rem; }
   font: 600 0.9375rem/1 var(--font-ui); text-decoration: none; cursor: pointer;
   border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent);
 }
-.btn:hover { color: var(--on-accent); filter: brightness(1.08); }
-.btn--ghost { background: transparent; color: var(--text); border-color: var(--line); }
-.btn--ghost:hover { color: var(--text); border-color: var(--muted); }
+.btn {
+  background: linear-gradient(180deg, #f0b457, var(--accent) 60%, #d99530);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 2px rgb(0 0 0 / 0.4);
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 80ms ease;
+}
+.btn:hover {
+  color: var(--on-accent); filter: brightness(1.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 0 0 1px rgb(232 163 61 / 0.35),
+    0 6px 18px -6px rgb(232 163 61 / 0.55);
+}
+.btn:active { transform: translateY(1px); filter: brightness(0.96); box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.25); }
+.btn--ghost {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent);
+  color: var(--text); border-color: var(--line); box-shadow: none;
+}
+.btn--ghost:hover { color: var(--text); border-color: var(--muted); box-shadow: none; filter: none; }
 .btn--small { min-height: 32px; padding: 4px 10px; font-size: 0.8125rem; }
 .btn[disabled] { opacity: 0.55; cursor: progress; }
 
@@ -126,7 +171,7 @@ input:hover { border-color: #3a404b; }
 input[aria-invalid="true"] { border-color: var(--down); }
 
 .check { display: flex; align-items: center; gap: 8px; font-size: 0.9375rem; cursor: pointer; }
-.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.check input:not(.switch) { width: 18px; height: 18px; accent-color: var(--accent); }
 
 /* Повідомлення: частина інтерфейсу, а не alert */
 .notice {
@@ -196,6 +241,7 @@ input[aria-invalid="true"] { border-color: var(--down); }
   align-items: start;
 }
 .dashboard__side { display: grid; gap: 40px; }
+.panel { padding: 20px 20px 24px; }
 .panel h2 { margin-bottom: 16px; }
 .panel .btn { margin-top: 8px; }
 .panel form .check { margin-bottom: 8px; }
@@ -254,3 +300,90 @@ input[aria-invalid="true"] { border-color: var(--down); }
   .status__cols, .status__row { grid-template-columns: 12px minmax(0, 1fr) 64px 64px; }
   .status__cols span:last-child, .status__pct:last-child { display: none; }
 }
+
+
+/* ---------- глибина: піднятий шар як фізична поверхня ---------- */
+.surface {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 40%),
+    var(--raised);
+  border: 1px solid var(--line);
+  border-top-color: #343a45;
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.02) inset, 0 24px 48px -32px rgb(0 0 0 / 0.8);
+}
+
+/* ---------- рядок монітора ---------- */
+.signal { transition: background-color 180ms ease; }
+.signals--dashboard .signal__actions .btn { transition: opacity 200ms ease, filter 150ms ease; }
+@media (hover: hover) {
+  .signals--dashboard .signal:hover,
+  .signals--dashboard .signal:has(:focus-visible) {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015));
+  }
+  /* Кнопка лишається видимою і доступною, лише тихішою поза фокусом рядка */
+  .signals--dashboard .signal:not(:hover, :has(:focus-visible)) .signal__actions .btn { opacity: 0.6; }
+  .signals--dashboard .signal:hover .lamp { --glow: 1; }
+}
+
+/* ---------- перемикач ---------- */
+.switch {
+  appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 34px; height: 20px; border-radius: 999px; position: relative;
+  background: #262b33; border: 1px solid #3a404b;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.5);
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+.switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+  border-radius: 50%; background: linear-gradient(180deg, #f4f2ec, #c9c6bf);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  transition: transform 200ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.switch:checked { background: color-mix(in srgb, var(--accent) 35%, #262b33); border-color: var(--accent); }
+.switch:checked::after { transform: translateX(14px); background: linear-gradient(180deg, #ffd08a, var(--accent)); }
+.switch[disabled] { opacity: 0.5; cursor: progress; }
+
+/* ---------- ОДИН МОМЕНТ: пульт вмикається ---------- */
+.console { padding: 20px 24px 24px; }
+.console .signals { border-top-color: #2f353f; }
+@media (prefers-reduced-motion: no-preference) {
+  .console .signal {
+    animation: row-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(250ms + var(--i) * 130ms);
+  }
+  .console .signal .lamp {
+    animation: ignite 900ms ease-out both;
+    animation-delay: calc(380ms + var(--i) * 130ms);
+  }
+  .console .signal .lamp--down {
+    animation: ignite 900ms ease-out both, breathe 1.6s ease-in-out infinite;
+    animation-delay: calc(380ms + var(--i) * 130ms), calc(1280ms + var(--i) * 130ms);
+  }
+  .console .legend { animation: row-in 500ms ease both; animation-delay: 1000ms; }
+}
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+/* Лампа спершу тьмяна, потім спалахує з перельотом і осідає до робочого світіння */
+@keyframes ignite {
+  0% { --glow: 0; filter: brightness(0.35) saturate(0.4); }
+  35% { --glow: 2.2; filter: brightness(1.5); }
+  100% { filter: none; }
+}
+
+/* ---------- плавний перехід між сторінками ---------- */
+@view-transition { navigation: auto; }
+.brand { view-transition-name: brand; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 220ms; }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
+
+/* ---------- сторінки помилок ---------- */
+.error-page { max-width: 640px; padding-top: 12vh; }
+.error-page__code { font: 500 0.9375rem var(--font-data); color: var(--muted); margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+.error-page h1 { margin-bottom: 16px; }
+.error-page p { color: var(--muted); max-width: 48ch; }
+.error-page .landing__actions { margin-top: 28px; }

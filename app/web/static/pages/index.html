@@ -4,10 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <meta name="theme-color" content="#14171c">
   <link rel="stylesheet" href="/static/css/fonts.css">
   <link rel="stylesheet" href="/static/css/app.css">
   <title>Vartovyi - моніторинг доступності сайтів і API</title>
   <meta name="description" content="Vartovyi перевіряє ваші сайти й API за розкладом, рахує uptime і показує публічну сторінку статусу.">
+  <link rel="canonical" href="/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Vartovyi - моніторинг доступності сайтів і API">
+  <meta property="og:description" content="Перевірки за розкладом, інциденти, uptime і публічна сторінка статусу.">
+  <meta property="og:image" content="/static/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <script src="/static/js/api.js" defer></script>
   <script src="/static/js/landing.js" defer></script>
 </head>
@@ -34,34 +44,34 @@
       </div>
     </section>
 
-    <section class="landing__panel" aria-labelledby="demo-title">
+    <section class="landing__panel surface console" aria-labelledby="demo-title">
       <div class="section-head">
         <h2 id="demo-title">Панель сигналів</h2>
         <span class="muted">приклад, не реальні дані</span>
       </div>
       <ul class="signals">
-        <li class="signal">
+        <li class="signal" style="--i: 0">
           <span class="lamp lamp--up" aria-hidden="true"></span>
           <span class="signal__name">API продакшн<span class="visually-hidden">: працює</span></span>
           <span class="signal__url data">https://api.shop.example/health</span>
           <span class="signal__code data">200</span>
           <span class="signal__ms data">142 мс</span>
         </li>
-        <li class="signal">
+        <li class="signal" style="--i: 1">
           <span class="lamp lamp--up" aria-hidden="true"></span>
           <span class="signal__name">Вітрина<span class="visually-hidden">: працює</span></span>
           <span class="signal__url data">https://shop.example</span>
           <span class="signal__code data">200</span>
           <span class="signal__ms data">318 мс</span>
         </li>
-        <li class="signal">
+        <li class="signal" style="--i: 2">
           <span class="lamp lamp--degraded" aria-hidden="true"></span>
           <span class="signal__name">Пошук<span class="visually-hidden">: повільно</span></span>
           <span class="signal__url data">https://search.shop.example/ping</span>
           <span class="signal__code data">200</span>
           <span class="signal__ms data">2 410 мс</span>
         </li>
-        <li class="signal">
+        <li class="signal" style="--i: 3">
           <span class="lamp lamp--down" aria-hidden="true"></span>
           <span class="signal__name">Платежі<span class="visually-hidden">: недоступний</span></span>
           <span class="signal__url data">https://pay.shop.example/status</span>
