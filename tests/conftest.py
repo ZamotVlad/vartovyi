@@ -5,8 +5,13 @@ from collections.abc import AsyncIterator
 import pytest
 from alembic import command
 from alembic.config import Config
+from fakeredis.aioredis import FakeRedis
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
+
+from app.api.deps import get_redis, get_session
+from app.main import create_app
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
@@ -59,3 +64,23 @@ async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
         finally:
             await session.close()
             await transaction.rollback()
+
+
+@pytest.fixture
+async def redis() -> AsyncIterator[FakeRedis]:
+    client = FakeRedis(decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.aclose()
+
+
+@pytest.fixture
+async def client(db_session: AsyncSession, redis: FakeRedis) -> AsyncIterator[AsyncClient]:
+    # ASGITransport не запускає lifespan, тож усю інфраструктуру підміняємо явно
+    app = create_app()
+    app.dependency_overrides[get_session] = lambda: db_session
+    app.dependency_overrides[get_redis] = lambda: redis
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as http:
+        yield http

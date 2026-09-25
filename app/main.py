@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from redis.asyncio import Redis
 
 from app.api.v1.router import api_router
 from app.config import get_settings
@@ -10,11 +11,14 @@ from app.db.session import create_engine, create_sessionmaker
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    engine = create_engine(get_settings())
+    settings = get_settings()
+    engine = create_engine(settings)
     app.state.sessionmaker = create_sessionmaker(engine)
+    app.state.redis = Redis.from_url(settings.redis_url, decode_responses=True)
     try:
         yield
     finally:
+        await app.state.redis.aclose()
         await engine.dispose()
 
 

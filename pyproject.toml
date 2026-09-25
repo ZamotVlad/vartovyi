@@ -6,8 +6,13 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.31.0",
+    # passlib 1.7.4 несумісний з bcrypt>=4.1 (падає на самоперевірці бекенду)
+    "bcrypt>=4.0.1,<4.1",
     "fastapi[standard]>=0.141.1",
+    "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.15.0",
+    "pyjwt>=2.15.0",
+    "redis>=8.1.0",
     "sqlalchemy[asyncio]>=2.0",
 ]
 
@@ -31,13 +36,19 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
+filterwarnings = [
+    # passlib 1.7.4 імпортує модуль crypt, який застарів у Python 3.12
+    "ignore:'crypt' is deprecated:DeprecationWarning:passlib",
+]
 
 [dependency-groups]
 dev = [
+    "fakeredis>=2.38.0",
     "httpx>=0.28.1",
     "mypy>=2.3.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.5",
+    "types-passlib>=1.7.7.20260211",
 ]
