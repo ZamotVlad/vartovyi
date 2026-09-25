@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import (
+    AccessClaimsDep,
     ApiKeyServiceDep,
     AuthServiceDep,
     CurrentUserDep,
-    RequiredBearerTokenDep,
 )
 from app.api.errors import ERROR_RESPONSES
 from app.db.models import User
@@ -50,10 +50,8 @@ async def refresh(data: RefreshRequest, auth: AuthServiceDep) -> TokenPair:
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    data: RefreshRequest, access_token: RequiredBearerTokenDep, auth: AuthServiceDep
-) -> None:
-    await auth.logout(access_token, data.refresh_token)
+async def logout(data: RefreshRequest, access: AccessClaimsDep, auth: AuthServiceDep) -> None:
+    await auth.logout(access, data.refresh_token)
 
 
 @router.get("/me", response_model=UserRead)

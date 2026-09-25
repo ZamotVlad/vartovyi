@@ -75,8 +75,10 @@ class AuthService:
             raise InactiveUserError
         return self._issue_pair(user)
 
-    async def logout(self, access_token: str, refresh_token: str) -> None:
-        access = await self._verified_claims(access_token, TokenType.ACCESS)
+    async def verify_access_token(self, token: str) -> TokenClaims:
+        return await self._verified_claims(token, TokenType.ACCESS)
+
+    async def logout(self, access: TokenClaims, refresh_token: str) -> None:
         refresh = self._decode(refresh_token, TokenType.REFRESH)
         # Не можна відкликати чужий refresh, маючи лише свій access
         if refresh.subject != access.subject:

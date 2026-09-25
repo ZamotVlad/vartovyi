@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import httpx
@@ -8,6 +8,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.config import Settings, get_settings
+from app.core.security import TokenClaims
 from app.db.models import User
 from app.domain.errors import InactiveUserError, NotAuthenticatedError
 from app.repositories.token_blacklist import TokenBlacklist
@@ -19,7 +20,7 @@ from app.services.monitor import MonitorService
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
-async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
+async def get_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
     """Одна сесія на запит. Commit робить сервіс, rollback - тут при винятку."""
     sessionmaker: async_sessionmaker[AsyncSession] = request.app.state.sessionmaker
     async with sessionmaker() as session:
@@ -92,13 +93,14 @@ async def get_current_active_user(
 CurrentUserDep = Annotated[User, Depends(get_current_active_user)]
 
 
-async def require_bearer_token(token: BearerTokenDep) -> str:
+async def get_access_claims(token: BearerTokenDep, auth: AuthServiceDep) -> TokenClaims:
+    """Перевірений access-токен. Для logout потрібні саме claims, а не користувач."""
     if token is None:
         raise NotAuthenticatedError
-    return token
+    return await auth.verify_access_token(token)
 
 
-RequiredBearerTokenDep = Annotated[str, Depends(require_bearer_token)]
+AccessClaimsDep = Annotated[TokenClaims, Depends(get_access_claims)]
 
 
 def get_monitor_service(session: SessionDep) -> MonitorService:
