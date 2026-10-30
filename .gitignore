@@ -21,7 +21,4 @@ htmlcov/
 
 docs/
 
-# Claude
-CLAUDE.md
-
 .env.prod
